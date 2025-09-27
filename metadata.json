@@ -1,0 +1,5 @@
+{
+  "name": "AI Hoán Đổi Gương Mặt",
+  "description": "Một ứng dụng sử dụng AI để tạo ra các hình ảnh nghệ thuật mới bằng cách kết hợp khuôn mặt của người dùng với các ý tưởng văn bản sáng tạo. Ứng dụng sẽ đánh giá độ rõ nét của khuôn mặt, cung cấp thư viện ý tưởng và cho phép tùy chỉnh tỷ lệ khung hình cho tác phẩm cuối cùng.",
+  "requestFramePermissions": []
+}
