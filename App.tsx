@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback } from 'react';
 import { UploadedImage, AspectRatio, ClarityCheckResult } from './types';
 import { checkFaceClarity, generateMergedImage } from './services/geminiService';
@@ -7,6 +8,49 @@ import OptionSelector from './components/OptionSelector';
 import AspectRatioSelector from './components/AspectRatioSelector';
 import ResultDisplay from './components/ResultDisplay';
 import Spinner from './components/Spinner';
+
+const addWatermark = (base64Image: string): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+                return reject(new Error('Không thể tạo context cho canvas.'));
+            }
+
+            // Draw the original image
+            ctx.drawImage(img, 0, 0);
+
+            // Configure watermark text
+            const fontSize = Math.max(16, img.width * 0.025); // Kích thước font linh hoạt, có giá trị tối thiểu
+            ctx.font = `bold ${fontSize}px 'Dancing Script', cursive`;
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.6)'; // Màu trắng bán trong suốt
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'bottom';
+            
+            // Thêm bóng mờ nhẹ để dễ đọc hơn
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+            ctx.shadowBlur = 4;
+            ctx.shadowOffsetX = 1;
+            ctx.shadowOffsetY = 1;
+
+            // Vị trí và vẽ watermark
+            const padding = fontSize * 0.8;
+            ctx.fillText('Hùng.AI', canvas.width - padding, canvas.height - padding);
+
+            // Resolve với chuỗi base64 mới (không có tiền tố 'data:image/png;base64,')
+            resolve(canvas.toDataURL('image/png').split(',')[1]);
+        };
+        img.onerror = (err) => {
+            console.error("Lỗi tải ảnh để thêm watermark:", err);
+            reject(new Error('Không thể tải ảnh để thêm watermark.'));
+        };
+        img.src = `data:image/png;base64,${base64Image}`;
+    });
+};
 
 
 const App: React.FC = () => {
@@ -97,8 +141,9 @@ const App: React.FC = () => {
 
         try {
             const resultBase64 = await generateMergedImage(selectedImage.base64, selectedImage.mimeType, combinedPrompts, aspectRatio);
-            setGeneratedImage(resultBase64);
-        // FIX: Corrected syntax for catch block. It should be `catch (err) {` instead of `catch (err) => {`.
+            setLoadingMessage('Đang thêm watermark...');
+            const watermarkedImage = await addWatermark(resultBase64);
+            setGeneratedImage(watermarkedImage);
         } catch (err) {
             setError('Đã xảy ra lỗi trong quá trình tạo ảnh. Vui lòng kiểm tra console và thử lại.');
             console.error(err);
@@ -123,6 +168,9 @@ const App: React.FC = () => {
                     </h1>
                     <p className="mt-2 text-lg text-gray-400">
                         Tạo ra những hình ảnh mới tuyệt đẹp bằng cách kết hợp khuôn mặt của bạn với các ý tưởng sáng tạo.
+                    </p>
+                    <p className="mt-2 text-lg text-amber-400">
+                        APP được thiết kế bởi HÙNG.AI
                     </p>
                 </header>
 
